@@ -38,7 +38,27 @@ async function run() {
 
         const userCollection = client.db('PayNet').collection('users')
 
+        // app.post('/signup', async (req, res) => {
+        //     const { name, email, phone, pin, role, status } = req.body;
+        //     const hashedPin = await bcrypt.hash(pin, 10);
+        //     const user = { email, pin: hashedPin, name, phone, role, status };
+
+        //     const existingUser = await userCollection.findOne({ email });
+        //     if (existingUser) {
+        //         return res.status(400).json({ message: 'User already exists' });
+        //     }
+
+        //     if (user && await bcrypt.compare(pin, user.pin)) {
+        //         const token = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '135d' });
+        //         res.json({ token, email });
+        //         const result = await userCollection.insertOne(user);
+        //         res.status(201).json({ message: 'User created', userId: result.insertedId });
+        //     }
+
+        // });
+
         app.post('/signup', async (req, res) => {
+
             const { name, email, phone, pin, role, status } = req.body;
             const hashedPin = await bcrypt.hash(pin, 10);
             const user = { email, pin: hashedPin, name, phone, role, status };
@@ -47,13 +67,10 @@ async function run() {
             if (existingUser) {
                 return res.status(400).json({ message: 'User already exists' });
             }
-            
-            if (user && await bcrypt.compare(pin, user.pin)) {
-                const token = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '135d' });
-                res.json({ token, email });
-                const result = await userCollection.insertOne(user);
-                res.status(201).json({ message: 'User created', userId: result.insertedId });
-            }
+
+            const result = await userCollection.insertOne(user);
+            const token = jwt.sign({ userId: result.insertedId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '135d' });
+            res.json({ message: 'User created', userId: result.insertedId, token, email });
 
         });
 
@@ -63,7 +80,7 @@ async function run() {
 
             if (user && await bcrypt.compare(pin, user.pin)) {
                 const token = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '155d' });
-                return res.json({ token, email});
+                return res.json({ token, email });
             } else {
                 res.status(401).json({ message: 'Invalid credentials' });
             }
